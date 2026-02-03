@@ -423,7 +423,13 @@ kube_ps1() {
     if [[ -n "${KUBE_PS1_DIVIDER}" ]] && [[ "${KUBE_PS1_CONTEXT_ENABLE}" == true ]]; then
       KUBE_PS1+="${KUBE_PS1_DIVIDER}"
     fi
-    KUBE_PS1+="$(_kube_ps1_color_fg "${KUBE_PS1_NS_COLOR:-cyan}")${KUBE_PS1_NAMESPACE}${KUBE_PS1_RESET_COLOR}"
+    local ns_color="${KUBE_PS1_NS_COLOR:-cyan}"
+    # Allow custom function to override color based on context
+    if [[ -n "${KUBE_PS1_NS_COLOR_FUNCTION}" ]]; then
+      ns_color="$("${KUBE_PS1_NS_COLOR_FUNCTION}" "${KUBE_PS1_NAMESPACE}")"
+    fi
+
+    KUBE_PS1+="$(_kube_ps1_color_fg "${ns_color}")${KUBE_PS1_NAMESPACE}${KUBE_PS1_RESET_COLOR}"
   fi
 
   # Suffix
