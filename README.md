@@ -5,8 +5,6 @@
 
 A script that lets you add the current Kubernetes context and namespace configured on `kubectl` to your Bash, Zsh, or Fish prompt.
 
-A script that lets you add the current Kubernetes context and namespace configured on `kubectl` to your Bash, Zsh, or Fish prompt.
-
 Inspired by several tools used to simplify usage of `kubectl`.
 
 ![prompt demo](img/kube-ps1-demo.gif)
