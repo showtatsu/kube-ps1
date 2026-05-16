@@ -3,8 +3,7 @@
 ![GitHub Release](https://img.shields.io/github/v/release/jonmosco/kube-ps1)
 [![CI](https://github.com/jonmosco/kube-ps1/actions/workflows/ci.yml/badge.svg)](https://github.com/jonmosco/kube-ps1/actions/workflows/ci.yml)
 
-A script that lets you add the current Kubernetes context and namespace
-configured on `kubectl` to your Bash/Zsh prompt strings (i.e. the `$PS1`).
+A script that lets you add the current Kubernetes context and namespace configured on `kubectl` to your Bash, Zsh, or Fish prompt.
 
 A script that lets you add the current Kubernetes context and namespace configured on `kubectl` to your Bash, Zsh, or Fish prompt.
 
