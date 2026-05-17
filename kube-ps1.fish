@@ -313,7 +313,7 @@ function _kubeoff_usage
     echo "  -h --help   print this message"
 end
 
-function kubeon
+function kubeon --description "Turn on kube-ps1 prompt status"
     argparse h/help g/global -- $argv
     or return
 
@@ -329,7 +329,7 @@ function kubeon
     set -g KUBE_PS1_ENABLED on
 end
 
-function kubeoff
+function kubeoff --description "Turn off kube-ps1 prompt status"
     argparse h/help g/global -- $argv
     or return
 
@@ -347,7 +347,7 @@ function kubeoff
 end
 
 # Build our prompt
-function kube_ps1
+function kube_ps1 --description "Print the Kubernetes prompt status"
     set -l last_status $status
     _kube_ps1_prompt_update
 
