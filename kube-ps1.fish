@@ -178,8 +178,8 @@ function _kube_ps1_get_ns
     if [ "$KUBE_PS1_NS_ENABLE" = true ]
         set -g _KUBE_PS1_NAMESPACE ($KUBE_PS1_BINARY config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
 
-        if test -z "_KUBE_PS1_NAMESPACE"
-            set _KUBE_PS1_NAMESPACE "N/A"
+        if test -z "$_KUBE_PS1_NAMESPACE"
+            set -g _KUBE_PS1_NAMESPACE "N/A"
         end
     end
 end
@@ -200,7 +200,7 @@ function kube_ps1_get_ctx_ns
   end
 
   # _KUBE_PS1_CFGFILES_READ_CACHE=
-  for conf in _kube_ps1_split_config $kubeconfig
+  for conf in (_kube_ps1_split_config "$kubeconfig")
       [ -r $conf ]; and set -a conf _KUBE_PS1_CFGFILES_READ_CACHE
   end
 
