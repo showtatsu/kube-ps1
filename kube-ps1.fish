@@ -20,8 +20,8 @@
 # Debug
 # $fish trace
 
-if set -q _KUBE_PS1_BINARY
-  set -l _KUBE_PS1_BINARY kubectl
+if not set -q _KUBE_PS1_BINARY
+  set -g _KUBE_PS1_BINARY kubectl
 end
 
 if not set -q _KUBE_PS1_SYMBOL_ENABLE
@@ -147,7 +147,7 @@ function kube_ps1_prompt_update
 
   for conf in _kube_ps1_split_config "$kubeconfig"
       [ -r "$conf" ] or continue
-      set -a config_file_cache conf
+      set -a config_file_cache $conf
       if _kube_ps1_file_newer_than "$conf" "$_KUBE_PS1_LAST_TIME"
           _kube_ps1_get_context_ns
           return $return_code
@@ -167,7 +167,7 @@ function _kube_ps1_get_context
   if [ "$KUBE_PS1_CONTEXT_ENABLE" = true ]
       set -g _KUBE_PS1_CONTEXT ($KUBE_PS1_BINARY config current-context 2>/dev/null)
 
-      if test -z "$_KUBE_PS2_CONTEXT"
+      if test -z "$_KUBE_PS1_CONTEXT"
           set -g _KUBE_PS1_CONTEXT "N/A"
       end
   end
