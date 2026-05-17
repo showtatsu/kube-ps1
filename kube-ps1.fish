@@ -64,6 +64,10 @@ if not set -q KUBE_PS1_SUFFIX
     set -g KUBE_PS1_SUFFIX ")"
 end
 
+if not set -q KUBE_PS1_HIDE_IF_NOCONTEXT
+    set -g KUBE_PS1_HIDE_IF_NOCONTEXT false
+end
+
 if not set -q KUBE_PS1_SYMBOL_IMG
     set -g KUBE_PS1_SYMBOL_IMG "☸️"
 end
@@ -80,6 +84,38 @@ if not set -q KUBE_PS1_ENABLED
     set -g KUBE_PS1_ENABLED on
 end
 
+if not set -q _KUBE_PS1_STAT_TYPE
+    if stat -c "%s" /dev/null &>/dev/null
+        set -g _KUBE_PS1_STAT_TYPE gnu
+    else
+        set -g _KUBE_PS1_STAT_TYPE bsd
+    end
+end
+
+if not set -q KUBE_PS1_SYMBOL_COLOR
+    set -g KUBE_PS1_SYMBOL_COLOR blue
+end
+
+if not set -q KUBE_PS1_CTX_COLOR
+    set -g KUBE_PS1_CTX_COLOR red
+end
+
+if not set -q KUBE_PS1_NS_COLOR
+    set -g KUBE_PS1_NS_COLOR cyan
+end
+
+if not set -q KUBE_PS1_PREFIX_COLOR
+    set -g KUBE_PS1_PREFIX_COLOR
+end
+
+if not set -q KUBE_PS1_SUFFIX_COLOR
+    set -g KUBE_PS1_SUFFIX_COLOR
+end
+
+if not set -q KUBE_PS1_BG_COLOR
+    set -g KUBE_PS1_BG_COLOR
+end
+
 set -g _KUBE_PS1_DISABLE_PATH $HOME/.kube/kube-ps1/disabled
 if test -f "$_KUBE_PS1_DISABLE_PATH"
     set -g KUBE_PS1_ENABLED off
@@ -87,14 +123,34 @@ end
 
 set -g _KUBE_PS1_KUBECONFIG_CACHE "$KUBECONFIG"
 set -g _KUBE_PS1_LAST_TIME 0
-set -g _KUBE_PS1_CFGFILES_READ_CACHE ""
+set -g _KUBE_PS1_CFGFILES_READ_CACHE
+
+function _kube_ps1_color_fg
+    set -l color $argv[1]
+    set -l text $argv[2]
+    if test -n "$color"
+        set_color $color
+        echo -n "$text"
+        set_color normal
+    else
+        echo -n "$text"
+    end
+end
 
 function _kube_ps1_binary_check
     command -q $argv[1]
 end
 
 function _kube_ps1_split_config
-    string split ":" $argv
+    string split ":" -- "$argv[1]"
+end
+
+function _kube_ps1_get_kubeconfig
+    if test -n "$KUBECONFIG"
+        _kube_ps1_split_config "$KUBECONFIG"
+    else
+        echo "$HOME/.kube/config"
+    end
 end
 
 function _kube_ps1_file_newer_than
@@ -102,13 +158,14 @@ function _kube_ps1_file_newer_than
     set -l file $argv[1]
     set -l check_time $argv[2]
 
-    # file modification time options from kube-ps1
-    if stat -c "%s" /dev/null >/dev/null 2>&1
-        # GNU stat
-        set mtime (stat -L -c %Y "$file")
+    if type -q path
+        set mtime (path mtime -- $file)
     else
-        # BSD stat
-        set mtime (stat -L -f %m "$file")
+        if test "$_KUBE_PS1_STAT_TYPE" = gnu
+            set mtime (stat -L -c %Y -- "$file")
+        else
+            set mtime (stat -L -f %m -- "$file")
+        end
     end
 
     test "$mtime" -gt "$check_time"
@@ -136,14 +193,7 @@ function _kube_ps1_prompt_update
     set -l conf
     set -l config_file_cache
 
-    # kubectl will read the environment variable $KUBECONFIG
-    # otherwise set it to ~/.kube/config
-    set -l kubeconfig "$KUBECONFIG"
-    if test -z "$kubeconfig"
-        set kubeconfig "$HOME/.kube/config"
-    end
-
-    for conf in (_kube_ps1_split_config "$kubeconfig")
+    for conf in (_kube_ps1_get_kubeconfig)
         test -r "$conf"; or continue
         set -a config_file_cache "$conf"
         if _kube_ps1_file_newer_than "$conf" "$_KUBE_PS1_LAST_TIME"
@@ -162,10 +212,16 @@ end
 
 function _kube_ps1_get_context
     if test "$KUBE_PS1_CONTEXT_ENABLE" = true
-        set -g KUBE_PS1_CONTEXT ($KUBE_PS1_BINARY config current-context 2>/dev/null)
+        set -g KUBE_PS1_CONTEXT ($KUBE_PS1_BINARY config current-context &>/dev/null)
 
         if test -z "$KUBE_PS1_CONTEXT"
             set -g KUBE_PS1_CONTEXT "N/A"
+        end
+
+        if test -n "$KUBE_PS1_CLUSTER_FUNCTION"
+            if functions -q "$KUBE_PS1_CLUSTER_FUNCTION"
+                set -g KUBE_PS1_CONTEXT ($KUBE_PS1_CLUSTER_FUNCTION "$KUBE_PS1_CONTEXT")
+            end
         end
     else
         set -g KUBE_PS1_CONTEXT ""
@@ -174,10 +230,16 @@ end
 
 function _kube_ps1_get_ns
     if test "$KUBE_PS1_NS_ENABLE" = true
-        set -g KUBE_PS1_NAMESPACE ($KUBE_PS1_BINARY config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
+        set -g KUBE_PS1_NAMESPACE ($KUBE_PS1_BINARY config view --minify --output 'jsonpath={..namespace}' &>/dev/null)
 
         if test -z "$KUBE_PS1_NAMESPACE"
             set -g KUBE_PS1_NAMESPACE "N/A"
+        end
+
+        if test -n "$KUBE_PS1_NAMESPACE_FUNCTION"
+            if functions -q "$KUBE_PS1_NAMESPACE_FUNCTION"
+                set -g KUBE_PS1_NAMESPACE ($KUBE_PS1_NAMESPACE_FUNCTION "$KUBE_PS1_NAMESPACE")
+            end
         end
     else
         set -g KUBE_PS1_NAMESPACE ""
@@ -190,14 +252,9 @@ function _kube_ps1_get_ctx_ns
 
     # Cache which cfgfiles we can read in case they change.
     set -l conf
-    set -g _KUBE_PS1_CFGFILES_READ_CACHE ""
+    set -g _KUBE_PS1_CFGFILES_READ_CACHE
 
-    set -l kubeconfig "$KUBECONFIG"
-    if test -z "$kubeconfig"
-        set kubeconfig "$HOME/.kube/config"
-    end
-
-    for conf in (_kube_ps1_split_config "$kubeconfig")
+    for conf in (_kube_ps1_get_kubeconfig)
         if test -r "$conf"
             set -a _KUBE_PS1_CFGFILES_READ_CACHE "$conf"
         end
@@ -211,6 +268,7 @@ function _kube_ps1_symbol
     test "$KUBE_PS1_SYMBOL_ENABLE" = false; and return
 
     set -l KUBE_PS1_SYMBOL \u2638
+    set -l symbol_color "$KUBE_PS1_SYMBOL_COLOR"
 
     if test "$KUBE_PS1_SYMBOL_USE_IMG" = true
         set KUBE_PS1_SYMBOL "$KUBE_PS1_SYMBOL_IMG"
@@ -221,12 +279,15 @@ function _kube_ps1_symbol
     # https://www.nerdfonts.com/
     if test "$KUBE_PS1_SYMBOL_OC_IMG" = true
         set KUBE_PS1_SYMBOL \ue7b7
+        set symbol_color red
     end
 
+    set -l output (_kube_ps1_color_fg "$symbol_color" "$KUBE_PS1_SYMBOL")
+
     if test "$KUBE_PS1_SYMBOL_PADDING" = true
-        echo "$KUBE_PS1_SYMBOL "
+        echo "$output "
     else
-        echo "$KUBE_PS1_SYMBOL"
+        echo "$output"
     end
 end
 
@@ -291,11 +352,21 @@ function kube_ps1
 
     test "$KUBE_PS1_ENABLED" = "off"; and return
 
+    if test "$KUBE_PS1_CONTEXT" = "N/A"; and test "$KUBE_PS1_HIDE_IF_NOCONTEXT" = true
+        return
+    end
+
+    # Background color
+    if test -n "$KUBE_PS1_BG_COLOR"
+        set_color -b "$KUBE_PS1_BG_COLOR"
+    end
+
     set -l kube_ps1 ""
 
     # Prefix
     if test -n "$KUBE_PS1_PREFIX"
-        set kube_ps1 "$kube_ps1$KUBE_PS1_PREFIX"
+        set -l prefix (_kube_ps1_color_fg "$KUBE_PS1_PREFIX_COLOR" "$KUBE_PS1_PREFIX")
+        set kube_ps1 "$kube_ps1$prefix"
     end
 
     # Symbol
@@ -311,7 +382,8 @@ function kube_ps1
 
     # Context
     if test "$KUBE_PS1_CONTEXT_ENABLE" = true; and test -n "$KUBE_PS1_CONTEXT"
-        set kube_ps1 "$kube_ps1$KUBE_PS1_CONTEXT"
+        set -l ctx (_kube_ps1_color_fg "$KUBE_PS1_CTX_COLOR" "$KUBE_PS1_CONTEXT")
+        set kube_ps1 "$kube_ps1$ctx"
     end
 
     # Namespace
@@ -321,13 +393,20 @@ function kube_ps1
                 set kube_ps1 "$kube_ps1$KUBE_PS1_DIVIDER"
             end
         end
-        set kube_ps1 "$kube_ps1$KUBE_PS1_NAMESPACE"
+        set -l ns (_kube_ps1_color_fg "$KUBE_PS1_NS_COLOR" "$KUBE_PS1_NAMESPACE")
+        set kube_ps1 "$kube_ps1$ns"
     end
 
     # Suffix
     if test -n "$KUBE_PS1_SUFFIX"
-        set kube_ps1 "$kube_ps1$KUBE_PS1_SUFFIX"
+        set -l suffix (_kube_ps1_color_fg "$KUBE_PS1_SUFFIX_COLOR" "$KUBE_PS1_SUFFIX")
+        set kube_ps1 "$kube_ps1$suffix"
     end
 
-    echo -n "$kube_ps1"
+    printf "%s" "$kube_ps1"
+
+    # Reset background color
+    if test -n "$KUBE_PS1_BG_COLOR"
+        set_color normal
+    end
 end
