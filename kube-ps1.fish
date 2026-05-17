@@ -131,7 +131,7 @@ function kube_ps1_prompt_update
   if [ "$KUBECONFIG" != "$_KUBE_PS1_KUBECONFIG_CACHE" ]
       # User changed KUBECONFIG; unconditionally refetch.
       set -l _KUBE_PS1_KUBECONFIG_CACHE $KUBECONFIG
-      _kube_ps1_get_context_ns
+      _kube_ps1_get_ctx_ns
       return $return_code
   end
 
@@ -145,17 +145,17 @@ function kube_ps1_prompt_update
       set kubeconfig "$HOME/.kube/config"
   end
 
-  for conf in _kube_ps1_split_config "$kubeconfig"
+  for conf in (_kube_ps1_split_config "$kubeconfig")
       [ -r "$conf" ] or continue
       set -a config_file_cache $conf
       if _kube_ps1_file_newer_than "$conf" "$_KUBE_PS1_LAST_TIME"
-          _kube_ps1_get_context_ns
+          _kube_ps1_get_ctx_ns
           return $return_code
       end
   end
 
   if [ "$config_file_cache" != "$_KUBE_PS1_CFGFILES_READ_CACHE" ]
-      _kube_ps1_get_context_ns
+      _kube_ps1_get_ctx_ns
       return $return_code
   end
 
@@ -184,7 +184,7 @@ function _kube_ps1_get_ns
     end
 end
 
-function kube_ps1_get_ctx_ns
+function _kube_ps1_get_ctx_ns
   # Set the command time
   set -l _KUBE_PS1_LAST_TIME (date +%s)
 
