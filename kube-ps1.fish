@@ -212,7 +212,7 @@ end
 
 function _kube_ps1_get_context
     if test "$KUBE_PS1_CONTEXT_ENABLE" = true
-        set -g KUBE_PS1_CONTEXT ($KUBE_PS1_BINARY config current-context &>/dev/null)
+        set -g KUBE_PS1_CONTEXT ($KUBE_PS1_BINARY config current-context 2>/dev/null)
 
         if test -z "$KUBE_PS1_CONTEXT"
             set -g KUBE_PS1_CONTEXT "N/A"
@@ -230,7 +230,7 @@ end
 
 function _kube_ps1_get_ns
     if test "$KUBE_PS1_NS_ENABLE" = true
-        set -g KUBE_PS1_NAMESPACE ($KUBE_PS1_BINARY config view --minify --output 'jsonpath={..namespace}' &>/dev/null)
+        set -g KUBE_PS1_NAMESPACE ($KUBE_PS1_BINARY config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
 
         if test -z "$KUBE_PS1_NAMESPACE"
             set -g KUBE_PS1_NAMESPACE "N/A"
@@ -348,13 +348,15 @@ end
 
 # Build our prompt
 function kube_ps1
+    set -l last_status $status
     _kube_ps1_prompt_update
 
-    test "$KUBE_PS1_ENABLED" = "off"; and return
+    test "$KUBE_PS1_ENABLED" = "off"; and return $last_status
 
     if test "$KUBE_PS1_CONTEXT" = "N/A"; and test "$KUBE_PS1_HIDE_IF_NOCONTEXT" = true
-        return
+        return $last_status
     end
+
 
     # Background color
     if test -n "$KUBE_PS1_BG_COLOR"
