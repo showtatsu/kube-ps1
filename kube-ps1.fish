@@ -3,7 +3,7 @@
 # Kubernetes prompt helper for bash/zsh/fish
 # Displays current context and namespace
 
-# Copyright 2024 Jon Mosco
+# Copyright 2026 Jon Mosco
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ if set -q _KUBE_PS1_BINARY
   set -l _KUBE_PS1_BINARY kubectl
 end
 
-if set -q _KUBE_PS1_SYMBOL_ENABLE
-  set _KUBE_PS1_SYMBOL_ENABLE true
+if not set -q _KUBE_PS1_SYMBOL_ENABLE
+  set -g _KUBE_PS1_SYMBOL_ENABLE true
 end
 
 if set -q _KUBE_PS1_SYMBOL_PADDING
@@ -48,7 +48,7 @@ if set -q _KUBE_PS1_CONTEXT_ENABLE
   set _KUBE_PS1_CONTEXT_ENABLE true
 end
 
-if test -n _KUBE_PS1_PREFIX
+if not set -q _KUBE_PS1_PREFIX
   set -g _KUBE_PS1_PREFIX "("
 end
 
@@ -135,8 +135,8 @@ function kube_ps1_prompt_update
       return $return_code
   end
 
-  local conf
-  local config_file_cache
+  set -l conf
+  set -l config_file_cache
 
   # kubectl will read the environment variable $KUBECONFIG
   # otherwise set it to ~/.kube/config
@@ -165,10 +165,10 @@ end
 ## DONE ##
 function _kube_ps1_get_context
   if [ "$KUBE_PS1_CONTEXT_ENABLE" = true ]
-      set -g _KUBE_PS1_CONTEXT $_KUBE_PS1_BINARY config current-context 2>/dev/null
+      set -g _KUBE_PS1_CONTEXT ($KUBE_PS1_BINARY config current-context 2>/dev/null)
 
-      if not test -e "_KUBE_PS1_CONTEXT"
-          set _KUBE_PS1_CONTEXT "N/A"
+      if test -z "$_KUBE_PS2_CONTEXT"
+          set -g _KUBE_PS1_CONTEXT "N/A"
       end
   end
 end
@@ -176,7 +176,7 @@ end
 ## DONE ##
 function _kube_ps1_get_ns
     if [ "$KUBE_PS1_NS_ENABLE" = true ]
-        set -g _KUBE_PS1_NAMESPACE $_KUBE_PS1_BINARY config view --minify --output 'jsonpath={..namespace}' 2>/dev/null
+        set -g _KUBE_PS1_NAMESPACE ($KUBE_PS1_BINARY config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
 
         if test -z "_KUBE_PS1_NAMESPACE"
             set _KUBE_PS1_NAMESPACE "N/A"
