@@ -28,76 +28,54 @@ if not set -q _KUBE_PS1_SYMBOL_ENABLE
   set -g _KUBE_PS1_SYMBOL_ENABLE true
 end
 
-if set -q _KUBE_PS1_SYMBOL_PADDING
-  set _KUBE_PS1_SYMBOL_PADDING false
+if not set -q _KUBE_PS1_SYMBOL_PADDING
+  set -g _KUBE_PS1_SYMBOL_PADDING false
 end
 
-if set -q _KUBE_PS1_SYMBOL_USE_IMG
-  set _KUBE_PS1_SYMBOL_USE_IMG false
+if not set -q _KUBE_PS1_SYMBOL_USE_IMG
+  set -g _KUBE_PS1_SYMBOL_USE_IMG false
 end
 
-if set -q _KUBE_PS1_SYMBOL_OC_IMG
-  set _KUBE_PS1_SYMBOL_OC_IMG false
+if not set -q _KUBE_PS1_SYMBOL_OC_IMG
+  set -g _KUBE_PS1_SYMBOL_OC_IMG false
 end
 
-if set -q _KUBE_PS1_NS_ENABLE
-  set _KUBE_PS1_NS_ENABLE true
+if not set -q _KUBE_PS1_NS_ENABLE
+  set -g _KUBE_PS1_NS_ENABLE true
 end
 
-if set -q _KUBE_PS1_CONTEXT_ENABLE
-  set _KUBE_PS1_CONTEXT_ENABLE true
+if not set -q _KUBE_PS1_CONTEXT_ENABLE
+  set -g _KUBE_PS1_CONTEXT_ENABLE true
 end
 
 if not set -q _KUBE_PS1_PREFIX
   set -g _KUBE_PS1_PREFIX "("
 end
 
-if set -q _KUBE_PS1_SEPARATOR
+if not set -q _KUBE_PS1_SEPARATOR
   set -g _KUBE_PS1_SEPARATOR "|"
 end
 
-if set -q _KUBE_PS1_DIVIDER
+if not set -q _KUBE_PS1_DIVIDER
   set -g _KUBE_PS1_DIVIDER ":"
 end
 
-if set -q _KUBE_PS1_SUFFIX
+if not set -q _KUBE_PS1_SUFFIX
   set -g _KUBE_PS1_SUFFIX ")"
 end
-
-#  if set -q "$_KUBE_PS1_SYMBOL_COLOR"
-#    set _KUBE_PS1_SYMBOL_COLOR blue
-#  end
-
-# KUBE_PS1_CTX_COLOR="${KUBE_PS1_CTX_COLOR-red}"
-# KUBE_PS1_NS_COLOR="${KUBE_PS1_NS_COLOR-cyan}"
-# KUBE_PS1_BG_COLOR="${KUBE_PS1_BG_COLOR}"
-
-# set -g color_ctx (set_color $KUBE_PROMPT_COLOR_CTX)
-# set -g color_ns (set_color $KUBE_PROMPT_COLOR_NS)
-
-# KUBE_PS1_CLUSTER_FUNCTION="${KUBE_PS1_CLUSTER_FUNCTION}"
-# KUBE_PS1_NAMESPACE_FUNCTION="${KUBE_PS1_NAMESPACE_FUNCTION}"
 
 set -g  _KUBE_PS1_DISABLE_PATH $HOME/.kube/kube-ps1/disabled
 set -g _KUBE_PS1_KUBECONFIG_CACHE KUBECONFIG
 set -g _KUBE_PS1_LAST_TIME 0
 
-# function kube_ps1_color_fg
-# end
-
-# function kube_ps1_color_bg
-# end
-
 function kube_ps1_binary_check
     command -q $1
 end
 
-## DONE ##
 function _kube_ps1_split_config
     string split ":" $argv
 end
 
-## DONE ##
 function _kube_ps1_file_newer_than
     set -l mtime
     set -l file $argv[1]
@@ -140,8 +118,10 @@ function kube_ps1_prompt_update
 
   # kubectl will read the environment variable $KUBECONFIG
   # otherwise set it to ~/.kube/config
-  set -l kubeconfig "$KUBECONFIG"
-  if set -q "$kubeconfig"
+  set -l kubeconfig
+  if set -q KUBECONFIG
+      set kubeconfig $KUBECONFIG
+  else
       set kubeconfig "$HOME/.kube/config"
   end
 
@@ -293,15 +273,7 @@ end
 
 # Build our prompt
 function kube_ps1
+    kube_ps1_prompt_update
 
-    echo "$_KUBE_PS1_PREFIX" \
-        (_kube_ps1_symbol) \
-        "$_KUBE_PS1_SEPARATOR" \
-        (_kube_ps1_get_context) \
-        "$_KUBE_PS1_DIVIDER" \
-        (_kube_ps1_get_ns) \
-        "$_KUBE_PS1_SUFFIX"
-
-      # echo (set_color blue)$KUBECTL_PROMPT_ICON" "(set_color cyan)"($context"(set_color white)"$KUBECTL_PROMPT_SEPARATOR"(set_color yellow)"$ns)"
-
+    echo "$KUBE_PS1_PREFIX"$(_kube_ps1_symbol)"$KUBE_PS1_SEPARATOR$_KUBE_PS1_CONTEXT$KUBE_PS1_DIVIDER$_KUBE_PS1_NAMESPACE$KUBE_PS1_SUFFIX"
 end
