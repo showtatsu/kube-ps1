@@ -285,9 +285,9 @@ function _kube_ps1_symbol
     set -l output (_kube_ps1_color_fg "$symbol_color" "$KUBE_PS1_SYMBOL")
 
     if test "$KUBE_PS1_SYMBOL_PADDING" = true
-        echo "$output "
+        printf "%s " "$output"
     else
-        echo "$output"
+        printf "%s" "$output"
     end
 end
 
