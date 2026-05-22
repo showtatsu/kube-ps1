@@ -65,6 +65,15 @@ _kube_ps1_init() {
     _KUBE_PS1_TPUT_AVAILABLE=false
   fi
 
+  # Detect stat type once (not needed for zsh which uses zstat builtin)
+  if [[ "${_KUBE_PS1_SHELL}" != "zsh" ]]; then
+    if stat -c "%s" /dev/null &> /dev/null; then
+      _KUBE_PS1_STAT_TYPE="gnu"
+    else
+      _KUBE_PS1_STAT_TYPE="bsd"
+    fi
+  fi
+
   case "${_KUBE_PS1_SHELL}" in
     "zsh")
       _KUBE_PS1_OPEN_ESC="%{"
@@ -225,11 +234,9 @@ _kube_ps1_file_newer_than() {
   if [[ "${_KUBE_PS1_SHELL}" == "zsh" ]]; then
     # Use zstat '-F %s.%s' to make it compatible with low zsh version (eg: 5.0.2)
     mtime=$(zstat -L +mtime -F %s.%s "${file}")
-  elif stat -c "%s" /dev/null &> /dev/null; then
-    # GNU stat
+  elif [[ "${_KUBE_PS1_STAT_TYPE}" == "gnu" ]]; then
     mtime=$(stat -L -c %Y "${file}")
   else
-    # BSD stat
     mtime=$(stat -L -f %m "$file")
   fi
 
