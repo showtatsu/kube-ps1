@@ -108,7 +108,7 @@ _kube_ps1_color_fg() {
     cyan) _KUBE_PS1_FG_CODE=6;;
     white) _KUBE_PS1_FG_CODE=7;;
     # 256
-    [0-9]|[1-9][0-9]|[1][0-9][0-9]|[2][0-4][0-9]|[2][5][0-6]) _KUBE_PS1_FG_CODE="${1}";;
+    [0-9]|[1-9][0-9]|[1][0-9][0-9]|[2][0-4][0-9]|[2][5][0-5]) _KUBE_PS1_FG_CODE="${1}";;
     *) _KUBE_PS1_FG_CODE=default
   esac
 
@@ -141,7 +141,7 @@ _kube_ps1_color_bg() {
     cyan) _KUBE_PS1_BG_CODE=6;;
     white) _KUBE_PS1_BG_CODE=7;;
     # 256
-    [0-9]|[1-9][0-9]|[1][0-9][0-9]|[2][0-4][0-9]|[2][5][0-6]) _KUBE_PS1_BG_CODE="${1}";;
+    [0-9]|[1-9][0-9]|[1][0-9][0-9]|[2][0-4][0-9]|[2][5][0-5]) _KUBE_PS1_BG_CODE="${1}";;
     *) _KUBE_PS1_BG_CODE=$'\033[0m';;
   esac
 
@@ -240,7 +240,21 @@ _kube_ps1_file_newer_than() {
     mtime=$(stat -L -f %m "$file")
   fi
 
-  [[ "${mtime}" -gt "${check_time}" ]]
+  [[ "${mtime}" -gt "${check_time}" ]] && return 0
+
+  # If the path is a symlink, also check the symlink's own mtime
+  if [[ -L "${file}" ]]; then
+    if [[ "${_KUBE_PS1_SHELL}" == "zsh" ]]; then
+      mtime=$(zstat +mtime -F %s.%s "${file}")
+    elif [[ "${_KUBE_PS1_STAT_TYPE}" == "gnu" ]]; then
+      mtime=$(stat -c %Y "${file}")
+    else
+      mtime=$(stat -f %m "$file")
+    fi
+    [[ "${mtime}" -gt "${check_time}" ]] && return 0
+  fi
+
+  return 1
 }
 
 _kube_ps1_prompt_update() {
