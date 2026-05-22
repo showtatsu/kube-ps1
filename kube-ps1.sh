@@ -379,10 +379,11 @@ EOF
 kubeon() {
   if [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
     _kubeon_usage
+    return 0
   elif [[ "${1}" == '-g' || "${1}" == '--global' ]]; then
     rm -f -- "${_KUBE_PS1_DISABLE_PATH}"
   elif [[ "$#" -ne 0 ]]; then
-    echo -e "error: unrecognized flag ${1}\\n"
+    echo -e "error: unrecognized flag ${1}\\n" >&2
     _kubeon_usage
     return
   fi
@@ -393,11 +394,12 @@ kubeon() {
 kubeoff() {
   if [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
     _kubeoff_usage
+    return 0
   elif [[ "${1}" == '-g' || "${1}" == '--global' ]]; then
     mkdir -p -- "$(dirname "${_KUBE_PS1_DISABLE_PATH}")"
     touch -- "${_KUBE_PS1_DISABLE_PATH}"
   elif [[ $# -ne 0 ]]; then
-    echo "error: unrecognized flag ${1}" >&2
+    echo -e "error: unrecognized flag ${1}\\n" >&2
     _kubeoff_usage
     return
   fi
