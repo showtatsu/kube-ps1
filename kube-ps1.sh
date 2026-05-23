@@ -163,7 +163,7 @@ _kube_ps1_color_bg() {
 }
 
 _kube_ps1_binary_check() {
-  command -v $1 >/dev/null
+  command -v "$1" >/dev/null
 }
 
 _kube_ps1_symbol() {
@@ -324,7 +324,7 @@ _kube_ps1_get_ns() {
 _kube_ps1_get_context_ns() {
   # Set the command time
   if [[ "${_KUBE_PS1_SHELL}" == "bash" ]]; then
-    if ((BASH_VERSINFO[0] >= 4 && BASH_VERSINFO[1] >= 2)); then
+    if ((BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2))); then
       _KUBE_PS1_LAST_TIME=$(printf '%(%s)T')
     else
       _KUBE_PS1_LAST_TIME=$(date +%s)
@@ -382,7 +382,7 @@ kubeon() {
   elif [[ "$#" -ne 0 ]]; then
     echo -e "error: unrecognized flag ${1}\\n" >&2
     _kubeon_usage
-    return
+    return 1
   fi
 
   KUBE_PS1_ENABLED=on
@@ -398,7 +398,7 @@ kubeoff() {
   elif [[ $# -ne 0 ]]; then
     echo -e "error: unrecognized flag ${1}\\n" >&2
     _kubeoff_usage
-    return
+    return 1
   fi
 
   KUBE_PS1_ENABLED=off
