@@ -142,18 +142,18 @@ _kube_ps1_color_bg() {
     white) _KUBE_PS1_BG_CODE=7;;
     # 256
     [0-9]|[1-9][0-9]|[1][0-9][0-9]|[2][0-4][0-9]|[2][5][0-5]) _KUBE_PS1_BG_CODE="${1}";;
-    *) _KUBE_PS1_BG_CODE=$'\033[0m';;
+    *) _KUBE_PS1_BG_CODE=default
   esac
 
   if [[ "${_KUBE_PS1_BG_CODE}" == "default" ]]; then
-    _KUBE_PS1_FG_CODE="${_KUBE_PS1_DEFAULT_BG}"
+    _KUBE_PS1_BG_CODE="${_KUBE_PS1_DEFAULT_BG}"
     return
   elif [[ "${_KUBE_PS1_SHELL}" == "zsh" ]]; then
     _KUBE_PS1_BG_CODE="%K{$_KUBE_PS1_BG_CODE}"
   elif [[ "${_KUBE_PS1_SHELL}" == "bash" ]]; then
     if [[ "${_KUBE_PS1_TPUT_AVAILABLE}" == "true" ]]; then
       _KUBE_PS1_BG_CODE="$(tput setab "${_KUBE_PS1_BG_CODE}")"
-    elif [[ $_KUBE_PS1_BG_CODE -ge 0 ]] && [[ $_KUBE_PS1_BG_CODE -le 256 ]]; then
+    elif [[ $_KUBE_PS1_BG_CODE -ge 0 ]] && [[ $_KUBE_PS1_BG_CODE -le 255 ]]; then
       _KUBE_PS1_BG_CODE="\033[48;5;${_KUBE_PS1_BG_CODE}m"
     else
       _KUBE_PS1_BG_CODE="${_KUBE_PS1_DEFAULT_BG}"
@@ -416,11 +416,6 @@ kube_ps1() {
 
   local KUBE_PS1
   local KUBE_PS1_RESET_COLOR="${_KUBE_PS1_OPEN_ESC}${_KUBE_PS1_DEFAULT_FG}${_KUBE_PS1_CLOSE_ESC}"
-
-  # If background color is set, reset color should also reset the background
-  # if [[ -n "${KUBE_PS1_BG_COLOR}" ]]; then
-  #   KUBE_PS1_RESET_COLOR="${_KUBE_PS1_OPEN_ESC}${_KUBE_PS1_DEFAULT_FG}${_KUBE_PS1_DEFAULT_BG}${_KUBE_PS1_CLOSE_ESC}"
-  # fi
 
   # Background Color
   [[ -n "${KUBE_PS1_BG_COLOR}" ]] && KUBE_PS1+="$(_kube_ps1_color_bg "${KUBE_PS1_BG_COLOR}")"
