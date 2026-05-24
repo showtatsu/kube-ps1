@@ -24,7 +24,7 @@ load common
 
 @test "kubeon with invalid flag" {
   run kubeon --invalid
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 1 ]
   [[ "$output" == *"error: unrecognized flag --invalid"* ]]
 }
 
@@ -48,7 +48,7 @@ load common
 
 @test "kubeoff with invalid flag" {
   run kubeoff --invalid
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 1 ]
   [[ "$output" == *"error: unrecognized flag --invalid"* ]]
 }
 
